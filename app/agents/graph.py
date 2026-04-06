@@ -16,8 +16,7 @@ from app.core.database import get_db
 
 
 # ─── DB ───────────────────────────────────────────────────────────────────────
-# mongo_client = MongoClient("mongodb://localhost:27017")
-# db = mongo_client["test"]
+
 db = get_db()
 
 # ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -862,12 +861,6 @@ tools = [
     resolve_entity_by_name,
 ]
 tools_by_name = {t.name: t for t in tools}
-settings
-# model = ChatGoogleGenerativeAI(
-#     model="gemini-2.5-flash",
-#     api_key="AIzaSyCGncHZD_SjTOG-LmdO_3nqdLeEzu2RVVg",
-#     temperature=0,
-# )
 
 model = ChatGoogleGenerativeAI(
     model=settings.gemini_model,
