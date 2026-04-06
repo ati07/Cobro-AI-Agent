@@ -274,14 +274,25 @@ def get_clients(
     Retrieve client records from the clients collection.
     Returns: name, email, phoneNumber, description, tipoIdentificacion,
              identificacion, statusCliente, comment, isComplete, isActive.
- 
+
     Default limit is 10000 — effectively returns ALL clients unless filtered.
     Only reduce limit when the user explicitly asks for a specific number (e.g. "top 5").
- 
+
+    IMPORTANT - field meanings:
+      - isActive (bool): whether the record exists / is not archived. 
+        Always include {"isDelete": False} in base query. Do NOT use isActive 
+        to filter by client status.
+      - statusCliente (str): the client's business status. Possible values:
+          "Activo"    → active client (currently engaged)
+          "Finalizado" → completed/closed client
+        Use THIS field when the user asks about "clientes activos" or 
+        "clientes finalizados".
+
     Optional filters examples:
-      {"name": "JP Kramer"}         → find by name (use regex for partial)
-      {"statusCliente": "Activo"}   → filter by status
-      {"isActive": true}            → only active clients
+      {"name": "JP Kramer"}              → find by name
+      {"statusCliente": "Activo"}        → clients with active status  ← USE THIS for "active clients"
+      {"statusCliente": "Finalizado"}    → completed clients
+      {"isActive": True}                 → all non-archived records (NOT the same as statusCliente)
     """
     base: dict = {"isDelete": False}
     if filters:
