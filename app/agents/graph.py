@@ -13,16 +13,16 @@ class MessagesState(TypedDict):
     messages: Annotated[list, add]
     llm_calls: int
 
-model = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    api_key=settings.google_api_key,
-    temperature=0,
-)
 # model = ChatGoogleGenerativeAI(
-#     model=settings.gemini_model,        # Now comes from .env
+#     model="gemini-2.5-flash",
 #     api_key=settings.google_api_key,
 #     temperature=0,
 # )
+model = ChatGoogleGenerativeAI(
+    model=settings.gemini_model,        # Now comes from .env
+    api_key=settings.google_api_key,
+    temperature=0,
+)
 model_with_tools = model.bind_tools(tools)
 
 def llm_call(state: MessagesState):
