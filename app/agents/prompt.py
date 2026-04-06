@@ -4,7 +4,7 @@ from app.agents.tools import COBROS_VENTAS_SCHEMA, CLIENT_SCHEMA, PROJECT_SCHEMA
 
 def make_system_prompt() -> str:
     today = datetime.now(UTC).date().isoformat()
-    return f"""You are an AI assistant for a real estate CRM (Cobros y Ventas module).
+    return f"""You are an AI assistant for VerdeAzul.
 
 Today's date: {today}
 
