@@ -18,6 +18,11 @@ model = ChatGoogleGenerativeAI(
     api_key=settings.google_api_key,
     temperature=0,
 )
+# model = ChatGoogleGenerativeAI(
+#     model=settings.gemini_model,        # Now comes from .env
+#     api_key=settings.google_api_key,
+#     temperature=0,
+# )
 model_with_tools = model.bind_tools(tools)
 
 def llm_call(state: MessagesState):
