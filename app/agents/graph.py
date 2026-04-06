@@ -18,6 +18,9 @@ from app.core.database import get_db
 # ─── DB ───────────────────────────────────────────────────────────────────────
 
 db = get_db()
+# mongo_client = MongoClient("mongodb+srv://testUser:test123@cluster0.bq15jz4.mongodb.net/test?retryWrites=true&w=majority")
+
+# db = mongo_client["test"]
 
 # ─── Schemas ──────────────────────────────────────────────────────────────────
 COBROS_VENTAS_SCHEMA = """
@@ -273,30 +276,25 @@ POPULATE_NAMES_ONLY = [
 def get_clients(
     filters: dict | None = None,
     limit: int = 10000,
-) -> list:
+    count_only: bool = False,
+) -> dict:
     """
     Retrieve client records from the clients collection.
-    Returns: name, email, phoneNumber, description, tipoIdentificacion,
-             identificacion, statusCliente, comment, isComplete, isActive.
 
-    Default limit is 10000 — effectively returns ALL clients unless filtered.
-    Only reduce limit when the user explicitly asks for a specific number (e.g. "top 5").
+    IMPORTANT:
+    - Use count_only=True when user asks for a TOTAL or COUNT → returns {"total": N} only
+    - Use count_only=False when user asks to LIST or SEE clients → returns full records
 
-    IMPORTANT - field meanings:
-      - isActive (bool): whether the record exists / is not archived. 
-        Always include {"isDelete": False} in base query. Do NOT use isActive 
-        to filter by client status.
-      - statusCliente (str): the client's business status. Possible values:
-          "Activo"    → active client (currently engaged)
-          "Finalizado" → completed/closed client
-        Use THIS field when the user asks about "clientes activos" or 
-        "clientes finalizados".
+    Examples:
+      "dame el total de clientes activos"  → count_only=True,  filters={"statusCliente": "Activo"}
+      "cuántos clientes activos hay?"      → count_only=True,  filters={"statusCliente": "Activo"}
+      "lista los clientes activos"         → count_only=False, filters={"statusCliente": "Activo"}
 
-    Optional filters examples:
-      {"name": "JP Kramer"}              → find by name
-      {"statusCliente": "Activo"}        → clients with active status  ← USE THIS for "active clients"
-      {"statusCliente": "Finalizado"}    → completed clients
-      {"isActive": True}                 → all non-archived records (NOT the same as statusCliente)
+    statusCliente values:
+      "Activo"     → active client
+      "Finalizado" → closed client
+
+    Do NOT use isActive to filter by client status — use statusCliente.
     """
     base: dict = {"isDelete": False}
     if filters:
@@ -304,9 +302,12 @@ def get_clients(
             if (k.endswith("Id") or k == "_id") and isinstance(v, str):
                 filters[k] = safe_object_id(v)
         base.update(filters)
- 
+
+    if count_only:
+        total = db["clients"].count_documents(base)
+        return {"total": total}  # ← returns ONLY {"total": 320}
+
     docs = list(db["clients"].find(base, {"_id": 0, "addedBy": 0}).limit(limit))
-    # return serialize_mongo(docs)
     serialized = serialize_mongo(docs)
     return {"total": len(serialized), "clients": serialized}
 
@@ -855,7 +856,9 @@ tools = [
     get_clients, get_projects, get_inventory, get_banks, get_providers,
     # Transaction tools
     find_records, aggregate_records,
-    ventas_report, ventas_with_payments_tool, cobros_report, rentas_report, reservas_report,
+    ventas_report, 
+    ventas_with_payments_tool, 
+    cobros_report, rentas_report, reservas_report,
     balance_report,
     # Utility
     resolve_entity_by_name,
@@ -944,6 +947,7 @@ UTILITY:
 - rentas           → filter by fechaDeRenta
 
 === TERMINOLOGY ===
+CobrosProgramados = scheduled payments | upcoming payments | pending payments
 saldo/balance = outstanding amount | cobros = payments | ventas = sales
 rentas = rentals | reservas = reservations | capital = principal
 intereses = interest | pendiente = unpaid | pagado = paid
